@@ -50,7 +50,10 @@ ledCount = (cfg.getint('LED','ledCount'))
 ips = cfg.items('IP')
 
 # 全局变量定义
-timeSave = os.path.getmtime(macroFile)
+try:
+    timeSave = os.path.getmtime(macroFile)
+except:
+    timeSave = 0 
 runningFlg = True
 
 
@@ -161,62 +164,68 @@ class GuiPart():
     def readMacro(self):
         global timeSave
         while runningFlg :
-            # 读取tool_n、gear_n 数据源：macro.txt
-            timeLast = os.path.getmtime(macroFile)
-            if timeLast > timeSave:
-                timeSave = timeLast
-                os.system(r'copy %s %s'%(macroFile,macroCopy)) 
-                f = open (macroCopy,'r')
-                fileLines = f.readlines()
-                f.close()
-                print(fileLines)
+            try:
+                # 读取tool_n、gear_n 数据源：macro.txt
+                timeLast = os.path.getmtime(macroFile)
+                if timeLast > timeSave:
+                    timeSave = timeLast
+                    os.system(r'copy %s %s'%(macroFile,macroCopy)) 
+                    time.sleep(0.02)
+                    os.remove(macroFile) 
+                    f = open (macroCopy,'r')
+                    fileLines = f.readlines()
+                    f.close()
+                    print(fileLines)
 
-                if len(fileLines) != 0:
-                    print('len(fileLines != 0)')
-                    self.closeLed()
-                    time.sleep(0.1)
-                    info = ''
-                    # 读取数据
-                    for item in fileLines:
-                        item = item.replace('\n','')
-                        try:
-                            _,start,number,ip =self.findLED(item)
-                            print(_,start,number,ip)
-                            info = info + '\n' + item 
-                            # self.varHuoJiaId.set(_)
-                            # self.varIp.set(ip)
-                            # self.varStart.set(start)
-                            # self.varNumber.set(number)
-                            t= Thread(target=self.send,args=(start,number,ip,))
-                            t.start()
-                        except:
-                            if item == "":
-                                info = info
-                            else:
-                                info = info + '\n'+ item + ' 货架错误'
-                            """
-                            print('-C')
-                            # self.varHuoJiaId.set('')
-                            # self.varIp.set('')
-                            # self.varStart.set('')
-                            # self.varNumber.set('')
-                            threads = []
-                            print(ips)
-                            for _,ip in ips:
-                                t= Thread(target=self.send,args=(0,0,ip,'C',))
-                                print(ip)
-                                threads.append(t)
-                            for t in threads:
+                    if len(fileLines) != 0:
+                        print('len(fileLines != 0)')
+                        self.closeLed()
+                        time.sleep(0.1)
+                        info = ''
+                        # 读取数据
+                        for item in fileLines:
+                            item = item.replace('\n','')
+                            try:
+                                _,start,number,ip =self.findLED(item)
+                                print(_,start,number,ip)
+                                info = info + '\n' + item 
+                                # self.varHuoJiaId.set(_)
+                                # self.varIp.set(ip)
+                                # self.varStart.set(start)
+                                # self.varNumber.set(number)
+                                t= Thread(target=self.send,args=(start,number,ip,))
                                 t.start()
-                            """
-                    self.varHuoJiaId.set(info)
+                            except:
+                                if item == "":
+                                    info = info
+                                else:
+                                    info = info + '\n'+ item + ' 货架错误'
+                                """
+                                print('-C')
+                                # self.varHuoJiaId.set('')
+                                # self.varIp.set('')
+                                # self.varStart.set('')
+                                # self.varNumber.set('')
+                                threads = []
+                                print(ips)
+                                for _,ip in ips:
+                                    t= Thread(target=self.send,args=(0,0,ip,'C',))
+                                    print(ip)
+                                    threads.append(t)
+                                for t in threads:
+                                    t.start()
+                                """
+                        self.varHuoJiaId.set(info)
+                    else:
+                        print('len(fileLines = 0)')
+                        self.varHuoJiaId.set("")
+                        self.closeLed()
                 else:
-                    print('len(fileLines = 0)')
-                    self.varHuoJiaId.set("")
-                    self.closeLed()
-            else:
-                pass
-            time.sleep(1)
+                    pass
+                time.sleep(1)
+            except :
+                print("Error")
+                continue
 
     def closeLed(self):
         print('len(fileLines = 0)')
